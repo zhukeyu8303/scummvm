@@ -50,6 +50,10 @@
 #include "sludge/sludge.h"
 #include "sludge/timing.h"
 
+#include "common/text-to-speech.h"
+#include "common/system.h"
+#include "sludge/sludge.h"
+
 namespace Sludge {
 
 extern bool allowAnyFilename;
@@ -1800,6 +1804,21 @@ builtIn(statusText) {
 	Common::String newText = fun->stack->thisVar.getTextFromAnyVar();
 	trimStack(fun->stack);
 	g_sludge->_statusBar->set(newText);
+
+	if (g_sludge->_ttsEnabled) {
+		Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+		if (ttsMan) {
+			if (newText.empty()) {
+				g_sludge->_statusBar->setLastSpokenStatusText(newText);
+			} else {
+				if (newText != g_sludge->_statusBar->getLastSpokenStatusText()) {
+					ttsMan->say(newText);
+					g_sludge->_statusBar->setLastSpokenStatusText(newText);
+				}
+			}
+		}
+	}
+	
 	return BR_CONTINUE;
 }
 

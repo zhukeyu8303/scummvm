@@ -124,6 +124,8 @@ public:
 	const SludgeGameDescription *_gameDescription;
 
 	Common::HashMap<Common::String, int> _saveNameToSlot;
+	// tts
+	bool _ttsEnabled;
 
 private:
 	Common::RandomSource *_rnd;

@@ -79,6 +79,8 @@ private:
 	void addSpeechLine(const Common::String &theLine, int x, int &offset);
 	int wrapSpeechXY(const Common::String &theText, int x, int y, int wrap, int sampleFile);
 	int wrapSpeechPerson(const Common::String &theText, OnScreenPerson &thePerson, int sampleFile, bool animPerson);
+	
+	Common::String _lastSpokenPasteText;
 };
 
 } // End of namespace Sludge

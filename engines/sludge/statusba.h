@@ -63,6 +63,9 @@ public:
 
 	void setAlignStatus(uint16 val) { _nowStatus->alignStatus = val; }
 
+	Common::String getLastSpokenStatusText() const { return _lastSpokenStatusText; }
+    void setLastSpokenStatusText(const Common::String &text) { _lastSpokenStatusText = text; }
+
 private:
 	SpritePalette _verbLinePalette;
 	SpritePalette _litVerbLinePalette;
@@ -71,6 +74,14 @@ private:
 	StatusStuff *_nowStatus;
 
 	SludgeEngine *_sludge;
+
+	Common::String _lastSpokenPasteText;
+
+	int _lastLitStatus;
+    Common::String _lastSpokenLitText;
+
+	Common::String _lastSpokenStatusText;
+	
 };
 
 } // End of namespace Sludge

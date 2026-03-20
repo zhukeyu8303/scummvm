@@ -25,6 +25,9 @@
 #include "sludge/detection.h"
 #include "sludge/keymapper_tables.h"
 
+#include "sludge/detection_tables.h"
+
+
 namespace Sludge {
 
 uint SludgeEngine::getLanguageID() const { return _gameDescription->languageID; }
@@ -51,6 +54,10 @@ public:
 	}
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
+
+	const ADExtraGuiOptionsMap *getAdvancedExtraGuiOptions() const override {
+        return optionsList;
+    }
 };
 
 bool SludgeMetaEngine::hasFeature(MetaEngineFeature f) const {

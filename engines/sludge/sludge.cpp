@@ -92,6 +92,9 @@ SludgeEngine::SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc)
 	_regionMan = new RegionManager(this);
 	_floorMan = new FloorManager(this);
 	_statusBar = new StatusBarManager(this);
+
+	_ttsEnabled = ConfMan.getBool("tts_enabled", _targetName);
+
 }
 
 SludgeEngine::~SludgeEngine() {

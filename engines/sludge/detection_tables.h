@@ -18,6 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "common/translation.h"
+#include "engines/advancedDetector.h"
+
+#define GAMEOPTION_TTS GUIO_GAMEOPTIONS10
+
+static const ADExtraGuiOptionsMap optionsList[] = {
+    {
+        GAMEOPTION_TTS,
+        {
+            _s("Enable Text to Speech"),
+            _s("Use TTS to read text in the game (if TTS is available)"),
+            "tts_enabled",
+            false,
+            0,
+            0
+        }
+    },
+    AD_EXTRA_GUI_OPTIONS_TERMINATOR
+};
+
+#define GAMEOPTIONS_DEFAULT GUIO2(GUIO_NOMIDI, GAMEOPTION_TTS)
 
 namespace Sludge {
 
@@ -44,11 +65,10 @@ static const PlainGameDescriptor sludgeGames[] = {
 	{ 0, 0 }
 };
 
-#define GAME1l(t, e, f1, m1, s1, lang, pl, langId) 	{ { t, e, AD_ENTRY1s(f1, m1, s1), lang, pl, ADGF_NO_FLAGS, GUIO1(GUIO_NOMIDI) }, langId }
+#define GAME1l(t, e, f1, m1, s1, lang, pl, langId) 	{ { t, e, AD_ENTRY1s(f1, m1, s1), lang, pl, ADGF_NO_FLAGS, GAMEOPTIONS_DEFAULT }, langId }
 #define GAME1(t, e, f1, m1, s1) GAME1l(t, e, f1, m1, s1, Common::EN_ANY, Common::kPlatformUnknown, 0)
-#define GAME2l(t, e, f1, m1, s1, f2, m2, s2, lang, pl, langId) 	{ { t, e, AD_ENTRY2s(f1, m1, s1, f2, m2, s2), lang, pl, ADGF_NO_FLAGS, GUIO1(GUIO_NOMIDI) }, langId }
+#define GAME2l(t, e, f1, m1, s1, f2, m2, s2, lang, pl, langId) 	{ { t, e, AD_ENTRY2s(f1, m1, s1, f2, m2, s2), lang, pl, ADGF_NO_FLAGS, GAMEOPTIONS_DEFAULT }, langId }
 #define GAME2(t, e, f1, m1, s1, f2, m2, s2) GAME2l(t, e, f1, m1, s1, f2, m2, s2, Common::EN_ANY, Common::kPlatformUnknown, 0)
-
 
 static const SludgeGameDescription gameDescriptions[] = {
 	GAME1("welcome", "", "Welcome.slg", "50445503761cf6684fe3270d0860a4c3", 51736),

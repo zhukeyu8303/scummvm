@@ -34,6 +34,11 @@
 #include "sludge/sound.h"
 #include "sludge/speech.h"
 
+
+#include "common/text-to-speech.h"
+#include "common/system.h"
+#include "sludge/sludge.h"
+
 namespace Sludge {
 
 void SpeechManager::init() {
@@ -46,6 +51,7 @@ void SpeechManager::init() {
 		_speech->speechY = 0;
 		_speech->lastFile = -1;
 	}
+	_lastSpokenPasteText.clear();
 }
 
 void SpeechManager::kill() {
@@ -106,6 +112,17 @@ int SpeechManager::getLastSpeechSound() {
 }
 
 int SpeechManager::wrapSpeechXY(const Common::String &theText, int x, int y, int wrap, int sampleFile) {
+
+	if (!theText.empty()) {
+		if (g_sludge->_ttsEnabled) {
+			Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+			if (ttsMan && theText != _lastSpokenPasteText) {
+				ttsMan->say(theText);
+				_lastSpokenPasteText = theText;
+			}
+		}
+    }
+
 	float cameraZoom = g_sludge->_gfxMan->getCamZoom();
 	int fontHeight = g_sludge->_txtMan->getFontHeight();
 	int cameraY = g_sludge->_gfxMan->getCamY();

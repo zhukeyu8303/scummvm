@@ -29,6 +29,10 @@
 #include "sludge/sludge.h"
 #include "sludge/statusba.h"
 
+#include "common/text-to-speech.h"
+#include "common/system.h"
+#include "sludge/sludge.h"
+
 namespace Sludge {
 
 StatusBarManager::StatusBarManager(SludgeEngine *sludge) {
@@ -44,6 +48,11 @@ void StatusBarManager::init() {
 	_mainStatus.statusY = g_system->getHeight() - 15;
 	statusBarColour(255, 255, 255);
 	statusBarLitColour(255, 255, 128);
+
+	_lastSpokenPasteText.clear();
+
+	_lastLitStatus = -1;
+    _lastSpokenLitText.clear();
 }
 
 void StatusBarManager::setLitStatus(int i) {
@@ -114,6 +123,21 @@ void StatusBarManager::draw() {
 					_nowStatus->statusX / cameraZoom, y / cameraZoom,
 					(n ++ == _nowStatus->litStatus) ? _litVerbLinePalette : _verbLinePalette);
 		}
+
+		if (n-1 == _nowStatus->litStatus) {
+			if (g_sludge->_ttsEnabled) {
+				Common::String currentLitText = stat->text;
+				if (_lastLitStatus != _nowStatus->litStatus || currentLitText != _lastSpokenLitText) {
+					Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+					if (ttsMan && !currentLitText.empty()) {
+						ttsMan->say(currentLitText);
+					}
+					_lastLitStatus = _nowStatus->litStatus;
+					_lastSpokenLitText = currentLitText;
+				}
+			}
+        }
+		
 		stat = stat->next;
 		y -= _sludge->_txtMan->getFontHeight();
 	}
