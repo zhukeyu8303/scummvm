@@ -275,6 +275,8 @@ public:
 	bool _clearSummaryFlag;
 	bool _cheatFl;
 	bool _restartFl;
+	bool _ttsEnabled;
+	Common::String _lastTTSMessage;
 	// Fields mapped into the flags array
 	int &_useItem;
 	int &_startup;
@@ -328,6 +330,9 @@ public:
 	 */
 	void printText(BaseSurface *s, const Common::String &msg);
 	void speakText(BaseSurface *s, const Common::String &msg);
+
+	Common::String normalizeTTS(const Common::String &text); 
+	void ttsSay(const Common::String &text, bool interrupt = true);
 
 	void syncSoundSettings() override;
 

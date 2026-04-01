@@ -19,6 +19,27 @@
  *
  */
 
+#include "common/translation.h"
+
+#define GAMEOPTION_TTS GUIO_GAMEOPTIONS10
+
+static const ADExtraGuiOptionsMap optionsList[] = {
+	{
+		GAMEOPTION_TTS,
+		{
+			_s("Enable Text to Speech"),
+			_s("Use TTS to read text in the game (if TTS is available)"),
+			"tts_enabled",
+			false,
+			0,
+			0
+		}
+	},
+	AD_EXTRA_GUI_OPTIONS_TERMINATOR
+};
+
+#define GAMEOPTIONS_DEFAULT GUIO2(GUIO_NOMIDI, GAMEOPTION_TTS)
+
 namespace Access {
 
 static const AccessGameDescription gameDescriptions[] = {
@@ -33,7 +54,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameAmazon,
 		0
@@ -49,7 +70,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::ES_ESP,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameAmazon,
 		0
@@ -64,7 +85,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_DEMO,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameAmazon,
 		0
@@ -79,7 +100,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_CD,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameAmazon,
 		0
@@ -94,7 +115,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameMartianMemorandum,
 		0
@@ -109,7 +130,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameMartianMemorandum,
 		0
@@ -124,7 +145,7 @@ static const AccessGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_DEMO | ADGF_UNSTABLE,
-			GUIO1(GUIO_NONE)
+			GAMEOPTIONS_DEFAULT
 		},
 		kGameMartianMemorandum,
 		0

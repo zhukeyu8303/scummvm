@@ -130,6 +130,8 @@ public:
 	int _playFieldHeight;
 	byte *_tile;
 	int _selectCommand;
+	int _lastHoveredCommand;
+	int _lastHoveredObject;
 	bool _conFlag;
 	int _rMouse[10][2];
 public:
