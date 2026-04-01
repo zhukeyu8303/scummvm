@@ -23,6 +23,7 @@
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
 #include "common/events.h"
+#include "common/text-to-speech.h"
 #include "engines/util.h"
 #include "graphics/scaler.h"
 #include "graphics/thumbnail.h"
@@ -75,6 +76,8 @@ AccessEngine::AccessEngine(OSystem *syst, const AccessGameDescription *gameDesc)
 	_scrollX = _scrollY = 0;
 	_imgUnscaled = false;
 	_canSaveLoad = false;
+	_ttsEnabled = ConfMan.hasKey("tts_enabled") ? ConfMan.getBool("tts_enabled") : false;
+	_lastTTSMessage.clear();
 	_establish = nullptr;
 
 	_conversation = 0;
@@ -333,6 +336,8 @@ void AccessEngine::speakText(BaseSurface *s, const Common::String &msg) {
 }
 
 void AccessEngine::printText(BaseSurface *s, const Common::String &msg) {
+	// Print text visually and emit TTS for screen text
+	ttsSay(msg, true);
 	Common::String lines = msg;
 	Common::String line;
 	int width = 0;
@@ -359,6 +364,42 @@ void AccessEngine::printText(BaseSurface *s, const Common::String &msg) {
 			break;
 	}
 	_events->waitKeyActionMouse();
+}
+
+Common::String AccessEngine::normalizeTTS(const Common::String &text) {
+	Common::String out;
+	bool insideSpace = false;
+	for (char c : text) {
+		char cc = c;
+		if (cc == '\r' || cc == '\n' || cc == '\t')
+			cc = ' ';
+		if (cc == ' ') {
+			if (insideSpace)
+				continue;
+			insideSpace = true;
+		} else {
+			insideSpace = false;
+		}
+		out += cc;
+	}
+	out.trim();
+	return out;
+}
+
+void AccessEngine::ttsSay(const Common::String &text, bool interrupt) {
+	if (!_ttsEnabled)
+		return;
+
+	Common::String cleaned = normalizeTTS(text);
+	if (cleaned.empty() || cleaned == _lastTTSMessage)
+		return;
+
+	Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
+	if (!ttsMan)
+		return;
+
+	_lastTTSMessage = cleaned;
+	ttsMan->say(cleaned, interrupt ? Common::TextToSpeechManager::INTERRUPT_NO_REPEAT : Common::TextToSpeechManager::QUEUE_NO_REPEAT);
 }
 
 

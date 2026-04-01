@@ -948,6 +948,7 @@ void Scripts::cmdCharSpeak() {
 	Common::String str = _data->readString();
 	debugC(1, kDebugScripts, "cmdCharSpeak(str=\"%s\")", str.c_str());
 	_vm->_bubbleBox->placeBubble(str);
+	_vm->ttsSay(str, true);
 	findNull();
 }
 
@@ -961,6 +962,7 @@ void Scripts::cmdTexSpeak() {
 
 	_vm->_bubbleBox->_bubbleDisplStr = _vm->_res->getEgoName();
 	_vm->_bubbleBox->placeBubble1(str);
+	_vm->ttsSay(str, true);
 	findNull();
 }
 
@@ -991,6 +993,7 @@ void Scripts::cmdTexChoice() {
 
 	_vm->_bubbleBox->calcBubble(tmpStr);
 	_vm->_bubbleBox->printBubble(tmpStr);
+	_vm->ttsSay(Common::String::format("Option 1: %s", tmpStr.c_str()), true);
 
 	const int responseYOff = (_vm->getGameID() == kGameMartianMemorandum) ? 20 : 11;
 
@@ -1006,6 +1009,7 @@ void Scripts::cmdTexChoice() {
 		_vm->_bubbleBox->_bubbleDisplStr = "RESPONSE 2";
 		_vm->_bubbleBox->calcBubble(tmpStr);
 		_vm->_bubbleBox->printBubble(tmpStr);
+		_vm->ttsSay(Common::String::format("Option 2: %s", tmpStr.c_str()), true);
 		responseCoords.push_back(_vm->_bubbleBox->_bounds);
 		_vm->_screen->_printOrg.y = _vm->_bubbleBox->_bounds.bottom + responseYOff;
 	}
@@ -1019,6 +1023,7 @@ void Scripts::cmdTexChoice() {
 		_vm->_bubbleBox->_bubbleDisplStr = "RESPONSE 3";
 		_vm->_bubbleBox->calcBubble(tmpStr);
 		_vm->_bubbleBox->printBubble(tmpStr);
+		_vm->ttsSay(Common::String::format("Option 3: %s", tmpStr.c_str()), true);
 		responseCoords.push_back(_vm->_bubbleBox->_bounds);
 		_vm->_screen->_printOrg.y = _vm->_bubbleBox->_bounds.bottom + responseYOff;
 	}
@@ -1047,6 +1052,13 @@ void Scripts::cmdTexChoice() {
 	} while ((choice == -1) || ((choice == 2) && choice3Fl));
 
 	_choice = choice + 1;
+	if (choice >= 0 && choice < (int)_vm->_bubbleBox->_bubbles.size()) {
+		// speak eventual chosen text (if available from bubble content)
+		Common::String choiceText;
+		// We do not have direct list text; keep as generic
+		choiceText = Common::String::format("Choice %d", choice + 1);
+		_vm->ttsSay(choiceText, true);
+	}
 	_vm->_bubbleBox->clearBubbles();
 }
 

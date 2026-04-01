@@ -32,6 +32,7 @@
 #include "access/martian/martian_game.h"
 
 #include "access/detection.h"
+#include "access/detection_tables.h"
 
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymapper.h"
@@ -77,6 +78,10 @@ class AccessMetaEngine : public AdvancedMetaEngine<Access::AccessGameDescription
 public:
 	const char *getName() const override {
 		return "access";
+	}
+
+	const ADExtraGuiOptionsMap *getAdvancedExtraGuiOptions() const override {
+		return optionsList;
 	}
 
 	bool hasFeature(MetaEngineFeature f) const override;

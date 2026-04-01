@@ -38,6 +38,8 @@ Room::Room(AccessEngine *vm) : Manager(vm) {
 	_tile = nullptr;
 	_conFlag = false;
 	_selectCommand = -1;
+	_lastHoveredCommand = -1;
+	_lastHoveredObject = -1;
 
 	for (int i = 0; i < 10; i++) {
 		_rMouse[i][0] = vm->_res->getRMouse(i, 0);
@@ -558,13 +560,46 @@ void Plotter::load(Common::SeekableReadStream *stream, int wallCount, int blockC
 		_blocks[i].bottom = stream->readSint16LE();
 }
 
+static const char *getCommandName(int commandId, bool martian) {
+	static const char *amazonNames[10] = {
+		"Look", "Use", "Take", "Inventory", "Climb", "Talk", "Walk", "Help", "", ""};
+	static const char *martianNames[10] = {
+		"Look","", "Open", "Move", "Take", "Use", "Walk", "Talk", "Travel", "Help"};
+	if (commandId < 0 || commandId >= 10)
+		return "";
+	return martian ? martianNames[commandId] : amazonNames[commandId];
+}
+
+
 void Room::doCommands() {
-	int commandId = 0;
+	int commandId = -1;
 	Common::CustomEventType action;
 
 	if (_vm->_startup != -1)
 		return;
 
+	const int *buttonStarts = _rMouse[0];
+	auto getButtonIndex = [&](int mouseX) -> int {
+		for (int i = 0; i < 10; ++i) {
+			int left = buttonStarts[i];
+			int right = (i < 9) ? buttonStarts[i + 1] : 320;
+			if (mouseX >= left && mouseX < right)
+				return i;
+		}
+		return -1;
+	};
+
+	int hoverCommand = -1;
+	if (_vm->_events->_mouseRow >= 22) {
+		hoverCommand = getButtonIndex(_vm->_events->_mousePos.x);
+	}
+
+	if (hoverCommand != _lastHoveredCommand) {
+		_lastHoveredCommand = hoverCommand;
+		if (hoverCommand != -1) {
+			_vm->ttsSay(getCommandName(hoverCommand, _vm->getGameID() == kGameMartianMemorandum), true);
+		}
+	}
 	if (_vm->_inventory->_invChangeFlag)
 		_vm->_inventory->refreshInventory();
 
@@ -574,26 +609,18 @@ void Room::doCommands() {
 		executeCommand(7);
 	}
 	else if (_vm->_events->_wheelUp || _vm->_events->_wheelDown) {
-		// Handle scrolling mouse wheel
 		cycleCommand(_vm->_events->_wheelUp ? 1 : -1);
-
-	} else if (_vm->_events->_middleButton) {
-		// Switch back to walking
+	}
+	else if (_vm->_events->_middleButton) {
 		handleCommand(7);
-
-	} else if (_vm->_events->_leftButton) {
+	}
+	else if (_vm->_events->_leftButton) {
 		if (_vm->_events->_mouseRow >= 22) {
-			// Mouse in user interface area
-			for (commandId = 0; commandId < 10; ++commandId) {
-				if (_vm->_events->_mousePos.x >= _rMouse[commandId][0] &&
-					_vm->_events->_mousePos.x < _rMouse[commandId][1])
-					break;
-			}
-			if (commandId < 10)
-				handleCommand(commandId);
 
+			commandId = getButtonIndex(_vm->_events->_mousePos.x);
+			if (commandId != -1)
+				handleCommand(commandId);
 		} else {
-			// Mouse click in main game area
 			mainAreaClick();
 		}
 	} else if (_vm->_events->getAction(action)) {
@@ -606,6 +633,7 @@ void Room::doCommands() {
 		}
 	}
 }
+
 
 void Room::cycleCommand(int incr) {
 	int command = _selectCommand + incr;
