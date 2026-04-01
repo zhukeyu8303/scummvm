@@ -533,7 +533,7 @@ void GameLogic::handleDialogReply(int index, int x, int y) {
     if (index < 537) {
         _vm->displayText("c04r", index, 0, x, y, 0);
     } else {
-        _vm->displayText("c04r2", index, 0, x, y, 0);
+        _vm->displayText("c04r2", index - 537, 0, x, y, 0);
     }
 
     switch (_vm->_currentRoomNumber) {
@@ -1164,7 +1164,7 @@ void GameLogic::displayExtremeCloseupOfPizzathonList() {
 		_vm->drawImageToScreen(lib, "magline.pcx", 61, 164);
     }
     if (_pizzathonListFlags1 & 0x20) {
-		_vm->drawImageToScreen(lib, "comline.pcx", 68, 100);
+		_vm->drawImageToScreen(lib, "comline.pcx", 68, 180);
     }
     _vm->paletteFadeIn(0, 256, 16);
     // sysMouseDriver(1);
@@ -1394,7 +1394,7 @@ void GameLogic::r0_handleRoomEvent1() {
 	_vm->drawImageToSurface(m04Gxl, "menu.pcx", _menuSurface, 113, 20);
 	_menuOffSprite = m04Gxl->loadSurface("ff.pcx");
 	_menuOnSprite = m04Gxl->loadSurface("n.pcx");
-	
+
 	menuDrawSoundEnabled();
 	menuDrawMusicEnabled();
 	// sysMouseDriver(1);
@@ -2933,12 +2933,73 @@ void GameLogic::r5_refreshRoomBackground() {
 	}
 }
 
+void GameLogic::r5_handleCassandra(const char *filename, int startFrame, int maxFrame, int startX, int startY, int targetX, int targetY, int width, int height, int totalSpeed, bool refreshBackground) {
+	const int stepX = (targetX > startX) ? 1 : -1;
+	const int stepY = (targetY > startY) ? 1 : -1;
+	const int deltaX = abs(targetX - startX);
+	const int deltaY = abs(targetY - startY);
+
+	int velX, velY;
+
+	if (deltaX == 0) {
+		velX = 0;
+		velY = totalSpeed * stepY;
+	} else if (deltaY == 0) {
+		velY = 0;
+		velX = totalSpeed * stepX;
+	} else if (deltaX > deltaY) {
+		velX = totalSpeed * stepX;
+		velY = ((totalSpeed * deltaY) / deltaX) * stepY;
+	} else {
+		velY = totalSpeed * stepY;
+		velX = ((totalSpeed * deltaX) / deltaY) * stepX;
+	}
+
+	const int stepNumb = abs(deltaX / velX);
+	WWSurface *workBackground = new WWSurface(320, 150);
+	workBackground->drawSurface(_vm->_backgroundSurface, 0, 0);
+	// sysMouseDriver(2)
+
+	int curX = startX;
+	int curY = startY;
+
+	// The original has a lot of scaling code and a bunch of code to handle how to position Garth and Wayne as if Cassandra was walking by them
+	// As she stop before them, and as the scaling computed was 1:1, the code has been significantly simplified
+	
+	WWSurface *cassSurface = new WWSurface(width, height);
+	for (int i = 0; i < stepNumb; ++i) {
+		updateRoomAnimations();
+		if (i > 0) {
+			_vm->_backgroundSurface->copyRectToSurface((Graphics::Surface)*workBackground, curX - velX, curY - velY - height, Common::Rect(curX - velX, curY - velY - height, curX - velX + width, curY - velY));
+		}
+		const int key = (i % maxFrame) + startFrame;
+		Common::String curFile = Common::String::format("%s%d.pcx", filename, key);
+		_vm->drawImageToSurface(_vm->_roomGxl, curFile.c_str(), cassSurface, 0, 0);
+
+		_vm->_backgroundSurface->drawSurfaceTransparent(cassSurface, curX, curY - height);
+		_vm->refreshActors();
+		curX += velX;
+		curY += velY;
+
+		// Add delay for better visual result
+		_vm->waitMillis(45);
+	}
+	
+	delete cassSurface;
+	delete workBackground;
+
+	// sysMouseDriver(1);
+	// if (refreshBackground) {
+	//		_vm->drawRoomImageToBackground("backg.pcx", 0, 0);
+	//		r5_refreshRoomBackground();
+	// }
+}
+
 void GameLogic::r5_handleRoomEvent() {
 	_r5_flags |= 0x01;
 	_vm->walkTo(195, 102, -1, 209, 96);
-	// TODO sub_185C0("wcass2", 0, 4, 0, 104, 170, 104, 26, 46, 8, 1);
-	// TODO sub_185C0("scass", 2, 1, 170, 104, 171, 104, 15, 46, 2, 0);
-	warning("STUB - r5_handleRoomEvent - sub_185C0?");
+	r5_handleCassandra("wcass2", 0, 4, 0, 104, 170, 104, 26, 46, 8, true);
+	r5_handleCassandra("scass", 2, 1, 170, 104, 171, 104, 15, 46, 2, false);
 	_vm->displayTextLines("c04r", 87, 150, 30, 1);
 	_vm->setDialogChoices(170, 171, 172, 173, 174);
 	_vm->startDialog();
@@ -3878,7 +3939,7 @@ void GameLogic::r8_refreshRoomBackground() {
 	if (!(_r8_flags & 0x01)) {
 		_vm->drawRoomImageToBackground("opendoor.pcx", 259, 51);
 	}
-	if (!(_r8_flags & 0x08) && ((_r8_flags & 0x80) || (_r38_flags & 0x08))) {
+	if (!(_r8_flags & 0x08) && (!(_r8_flags & 0x80) || (_r38_flags & 0x08))) {
 		_vm->_roomEventNum = 1;
 	}
 	if (!_vm->_hasRoomAnimationCallback) {
@@ -3893,7 +3954,6 @@ void GameLogic::r8_handleRoomEvent1() {
 	if (_r38_flags & 0x08) {
 		_vm->displayTextLines("c04r", 349, 200, 30, 9);
 		_r8_flags |= 0x20;
-		_vm->quitGame();
 	} else {
 		if (_pizzathonListFlags2 & 0x08) {
 			if (_r8_flags & 0x40) {
@@ -4392,7 +4452,7 @@ void GameLogic::r10_buyItem() {
 		_vm->playAnimation("getmon", 0, 3, 98, 7, 0, 100);
 		_vm->displayText("c04r", 8, 0, 320, 115, 0);
 		_vm->playAnimation("gest", 0, 7, 127, 7, 0, 200);
-		_vm->playAnimation("getmon", 4, 2, 98, 7, 0, 100);
+		_vm->playAnimation("getmon", 3, 2, 98, 7, 0, 100);
 		if (_r10_selectedItemToBuy == 1) {
 			_r10_flags |= 0x08;
 		} else {
@@ -5984,7 +6044,7 @@ void GameLogic::r20_handleRoomEvent() {
 	_vm->waitSeconds(1);
 	_vm->playAnimation("expl", 0, 36, 40, 32, 0, 150);
 	_vm->playSound("ss17.snd", 0);
-	_vm->playAnimation("expl", 37, 66, 40, 32, 0, 150);
+	_vm->playAnimation("expl", 37, 66 - 37, 40, 32, 0, 150);
 	_r19_flags &= ~0x01;
 	_r19_flags |= 0x08;
 	_vm->_wayneSpriteX = _r19_wayneSpriteX;
@@ -6159,7 +6219,7 @@ void GameLogic::r24_climbLadder(int wayneX, int wayneLadderX, int wayneLadderY, 
 	WWSurface *gclimbSprites[4];
 	WWSurface *getladSprites[3];
 	GxlArchive *roomLib = _vm->_roomGxl;
-	
+
 	for (int index = 0; index < 4; index++) {
 		tempFilename = Common::String::format("wclimb%d", index);
 		wclimbSprites[index] = roomLib->loadRoomSurface(tempFilename.c_str());
@@ -6258,7 +6318,7 @@ void GameLogic::r24_handleRoomEvent(int wayneLadderX, int wayneX, int wayneLadde
 	WWSurface *gclimbSprites[4];
 	WWSurface *getladSprites[3];
 	GxlArchive *roomLib = _vm->_roomGxl;
-	
+
 	for (int index = 0; index < 4; index++) {
 		tempFilename = Common::String::format("wclimb%d", index);
 		wclimbSprites[index] = roomLib->loadRoomSurface(tempFilename.c_str());
@@ -6793,13 +6853,13 @@ void GameLogic::r30_runLudwigCutscene() {
 	_vm->_garthSpriteX = -1;
 	_vm->_wayneSpriteY = -1;
 	_vm->_wayneSpriteX = -1;
-	_vm->_roomName = "m06"; // Change the active gxl file
+	_vm->openAlternateRoomLibrary("m06"); // Change the active gxl file
 	_vm->paletteFadeOut(0, 256, 64);
 	_vm->_screen->clear(0);
 	// TODO gxGetDisplayPalette(palette1);
-	// TODO pcxGetLibPalette(8, roomLib, "backg", palette2);
-	// TODO gxSetDisplayPalette(palette2);
-	warning("r30_runLudwigCutscene - STUB some initialization");
+
+	_vm->loadPalette(_vm->_roomGxl, "backg.pcx");
+
 	_vm->paletteFadeOut(0, 256, 64);
 	_vm->_screen->clear(0);
 	_vm->drawRoomImageToBackground("backg.pcx", 0, 0);
@@ -7025,7 +7085,7 @@ void GameLogic::r31_handleRoomEvent4() {
 			r31_correctAnswerSelected();
 		}
 	}
-	
+
 	r31_runBabeoff();
 }
 
@@ -7631,7 +7691,7 @@ int GameLogic::r35_handleVerbUse() {
 	default:
 		actionTextIndex = 0;
 		break;
-	}	
+	}
 	return actionTextIndex;
 }
 
@@ -7951,7 +8011,7 @@ void GameLogic::r37_climbExitLadderUp() {
 		tempFilename = Common::String::format("wgetldr%d", index);
 		getldrSprites[index] = roomLib->loadRoomSurface(tempFilename.c_str());
 	}
-	
+
 	WWSurface *workBackground = new WWSurface(320, 150);
 
 	for (int index = 0; index < 3; index++) {
@@ -7965,7 +8025,7 @@ void GameLogic::r37_climbExitLadderUp() {
 	for (int index = 0; index < 3; index++) {
 		delete getldrSprites[index];
 	}
-	
+
 	for (int index = 0; index < 4; index++) {
 		tempFilename = Common::String::format("gclimb%d", index);
 		gclimbSprites[index] = roomLib->loadRoomSurface(tempFilename.c_str());
@@ -8046,7 +8106,7 @@ void GameLogic::r37_climbLadderDown() {
 
 	int wayneLadderY = 26;
 	int climbCtr = 0, garthLadderY = wayneLadderY;
-	
+
 	while (garthLadderY < 92) {
 		if (climbCtr % 2 == 0) {
 			wayneLadderY += 7;
@@ -8061,7 +8121,7 @@ void GameLogic::r37_climbLadderDown() {
 			workBackground->drawSurfaceTransparent(ggetldlSprites[climbCtr - 12], 168, 26);
 		} else {
 			workBackground->drawSurfaceTransparent(gclimbSprites[climbCtr % 4], 187, garthLadderY);
-		} 
+		}
 		if (climbCtr < 20) {
 			workBackground->drawSurfaceTransparent(wclimbSprites[climbCtr % 4], 187, wayneLadderY);
 		} else if (climbCtr <= 22) {
@@ -8185,7 +8245,7 @@ void GameLogic::r37_climbLadderUp() {
 		workBackground->drawSurfaceTransparent(ggetldlSprites[index], 168, 28);
 		workBackground->drawSurfaceTransparent(_vm->_wayneSprites[0], 155, 26);
 		_vm->_screen->drawSurface(workBackground, 0, 0);
-		_vm->waitMillis(200);		
+		_vm->waitMillis(200);
 	}
 
 	for (int index = 0; index < 4; index++) {
@@ -8339,7 +8399,7 @@ void GameLogic::r37_climbEnterLadderDown() {
 	}
 
 	delete workBackground;
-	
+
 	_vm->setWaynePosition(163, 70);
 	_vm->setGarthPosition(138, 75);
 	_vm->refreshActors();
@@ -8414,7 +8474,7 @@ void GameLogic::r38_updateRoomAnimations() {
 
 void GameLogic::r38_refreshRoomBackground() {
 	_r38_flags |= 0x01;
-	if (!_vm->_hasRoomAnimationCallback || !(_r38_flags & 0x08)) {
+	if (!_vm->_hasRoomAnimationCallback && !(_r38_flags & 0x08)) {
 		r38_initRoomAnimations();
 	}
 	if ((_r38_flags & 0x08)) {
@@ -8437,6 +8497,181 @@ void GameLogic::r38_atrap() {
 	_vm->_garthSpriteX = -1;
 	_vm->playAnimation("atrap", 0, 12, 128, 56, 0, 100);
 	_r38_flags |= 0x02;
+}
+
+void GameLogic::handlePizzathon() {
+	_vm->openAlternateRoomLibrary("e00");
+	_vm->_screen->clear(0);
+
+	// The list is complete, let's start the pizzathon
+	_vm->drawRoomImageToScreen("text.pcx", 44, 77);
+	_vm->paletteFadeIn(0, 256, 8);
+	_vm->waitSeconds(5);
+
+	_vm->paletteFadeOut(0, 256, 8);
+	_vm->drawRoomImageToScreen("backgb.pcx", 0, 0);
+
+	_vm->_musicIndex = 1;
+	_vm->changeMusic();
+	_vm->paletteFadeIn(0, 256, 4);
+
+	WWSurface *backSprite = new WWSurface(156, 96);
+
+	// show phone center + phone animation on upper left
+	_vm->drawImageToSurface(_vm->_roomGxl, "backul.pcx", backSprite, 0, 0);
+	_vm->drawSpiralEffect(backSprite, 2, 2, 2, 2);
+	delete backSprite;
+
+	_vm->playAnimation("phone", 1, 12, 2, 14, 0, 125);
+
+	// show bike delivery + bike animation on lower right
+	backSprite = new WWSurface(156, 96);
+	_vm->drawImageToSurface(_vm->_roomGxl, "backlr.pcx", backSprite, 0, 0);
+	_vm->drawSpiralEffect(backSprite, 162, 102, 2, 2);
+	delete backSprite;
+
+	for (int i = 1; i < 3; ++i) {
+		_vm->playAnimation("bike", 1, 4, 211, 104, 0, 100);
+	}
+
+	// show board + animation on lower left
+	backSprite = new WWSurface(156, 96);
+	_vm->drawImageToSurface(_vm->_roomGxl, "backll.pcx", backSprite, 0, 0);
+	_vm->drawSpiralEffect(backSprite, 2, 102, 2, 2);
+	delete backSprite;
+
+	_vm->playAnimation("board", 1, 4, 13, 127, 0, 100);
+	_vm->waitSeconds(1);
+
+	// show band + animation on upper right
+	backSprite = new WWSurface(156, 96);
+	_vm->drawImageToSurface(_vm->_roomGxl, "backur.pcx", backSprite, 0, 0);
+	_vm->drawSpiralEffect(backSprite, 162, 2, 2, 2);
+	delete backSprite;
+
+	for (int i = 1; i < 3; ++i)
+		_vm->playAnimation("band", 1, 4, 162, 44, 0, 125);
+
+	_vm->playAnimation("board", 5, 2, 13, 127, 0, 150);
+	_vm->playAnimation("phone", 1, 12, 2, 14, 0, 125);
+	_vm->playAnimation("board", 7, 2, 13, 127, 0, 150);
+
+	for (int i = 1; i < 3; ++i)
+		_vm->playAnimation("bike", 1, 4, 211, 104, 0, 100);
+
+	for (int i = 1; i < 3; ++i)
+		_vm->playAnimation("band", 1, 4, 162, 44, 0, 125);
+
+	_vm->playAnimation("board", 9, 2, 13, 127, 0, 150);
+
+	for (int i = 1; i < 3; ++i)
+		_vm->playAnimation("bike", 1, 4, 211, 104, 0, 100);
+
+	_vm->playAnimation("board", 11, 2, 13, 127, 0, 150);
+	_vm->playSound("ss41.snd", false);
+
+	for (int i = 1; i < 10; ++i)
+		_vm->playAnimation("board", 12, 2, 13, 127, 0, 150);
+
+	_vm->playAnimation("board", 13, 1, 13, 127, 0, 150);
+	_vm->waitSeconds(2);
+
+	handleHypnosisCutscene();
+
+	_vm->paletteFadeOut(0, 256, 4);
+	_vm->_screen->clear(0);
+
+	 // set 8, reset 4
+	_pizzathonListFlags2 |= 8;
+	_pizzathonListFlags2 &= 0xFB;
+
+	_vm->setWaynePosition(113, 120);
+	_vm->setGarthPosition(131, 112);
+	_vm->_isTextVisible = false;
+
+	_vm->changeRoom(13);	
+}
+
+void GameLogic::handleHypnosisCutscene() {
+	WWSurface *sprite = new WWSurface(320, 200);
+	_vm->drawImageToSurface(_vm->_roomGxl, "spstart.pcx", sprite, 0, 0);
+	_vm->drawRandomEffect(sprite, 0, 0, 4, 4);
+	delete sprite;
+
+	for (int i = 0; i < 17; ++i) {
+		_vm->_screen->fillRect(0, 0, 319, 37, 0);
+		_vm->displayText("e00", i, 0, 156, 0, 0);
+		_vm->playAnimation("spiral", 0, 14, 77, 38, 0, 200);
+	}
+
+	for (int i = 0; i < 3; ++i) {
+		_vm->_screen->fillRect(0, 0, 319, 37, 0);
+		_vm->drawCurrentText(164, 170, nullptr);
+		_vm->playAnimation("spiral", 0, 15, 77, 38, 0, 100);
+		_vm->_screen->fillRect(0, 140, 319, 199, 0);
+		_vm->drawCurrentText(164, 0, nullptr);
+		_vm->playAnimation("spiral", 0, 15, 77, 38, 0, 100);
+	}
+}
+
+void GameLogic::showEnding() {
+	// sysMouseDriver(2);
+
+	GxlArchive *e01Gxl = new GxlArchive("e01");
+	_vm->paletteFadeOut(0, 256, 64);
+    _vm->_screen->clear(0);
+	_vm->drawImageToScreen(e01Gxl, "backg.pcx", 0, 0);
+	_vm->drawImageToScreen(e01Gxl, "tv01.pcx", 180, 74);
+	_vm->_musicIndex = 1;
+	_vm->changeMusic();
+	_vm->paletteFadeIn(0, 256, 3);
+
+	// Wayne and Garth animation on TV
+	for (int i = 1; i < 39; ++i) {
+		Common::String filename = Common::String::format("tv%02d.pcx", i);
+		_vm->drawImageToScreen(e01Gxl, filename.c_str(), 180, 74);
+		_vm->waitMillis(100);
+	}
+
+	// Random effect on TV to display the Wayne's World logo
+	_vm->waitSeconds(1);
+	WWSurface *tv40Image = e01Gxl->loadSurface("tv40.pcx");
+	_vm->drawRandomEffect(tv40Image, 180, 74, 1, 1);
+	delete tv40Image;
+	tv40Image = nullptr;
+
+	_vm->waitSeconds(3);
+	_vm->_screen->saveScreenshot();
+	WWSurface *leftBackground = new WWSurface(_vm->_screen->_screenCopy);
+	WWSurface *rightBackground = e01Gxl->loadSurface("backgv.pcx");
+	WWSurface *scrollSurface = new WWSurface(320, 200);
+	for (int i = 3; i < 319; ++i) {
+		scrollSurface->copyRectToSurface((Graphics::Surface)*leftBackground, 0, 0, Common::Rect(i, 0, 319, 200));
+		scrollSurface->copyRectToSurface((Graphics::Surface)*rightBackground, 319 - i, 0, Common::Rect(0, 0, i, 200));
+		_vm->_screen->drawSurface(scrollSurface, 0, 0);
+	}
+	_vm->_screen->drawSurface(rightBackground, 0, 0);	
+	delete scrollSurface;
+	scrollSurface = nullptr;
+	WWSurface *zoomSurface = e01Gxl->loadSurface("zoom1.pcx");
+	_vm->drawRandomEffect(zoomSurface, 0, 0, 4, 4);
+	delete zoomSurface;
+	_vm->waitSeconds(2);
+	zoomSurface = e01Gxl->loadSurface("zoomt.pcx");
+	_vm->drawRandomEffect(zoomSurface, 0, 0, 2, 2);
+	delete zoomSurface;
+	zoomSurface = nullptr;
+
+	_vm->playSound("sv42.snd", 1);
+	_vm->waitMillis(100);
+	_vm->playSound("sv34.snd", 1);
+	_vm->waitSeconds(5);
+
+	_vm->paletteFadeOut(0, 256, 4);
+
+	delete rightBackground;
+	delete leftBackground;
+	delete e01Gxl;
 }
 
 void GameLogic::r38_useCassandra() {
@@ -8509,7 +8744,7 @@ int GameLogic::r39_handleVerbUse() {
 	return actionTextIndex;
 }
 
-int GameLogic::r39_handleVerbOpen() {	
+int GameLogic::r39_handleVerbOpen() {
 	int actionTextIndex = -1;
 	switch (_vm->_objectNumber) {
 	case kObjectIdDoor39:
@@ -8619,7 +8854,7 @@ void GameLogic::closeSaveLoadMenu() {
 
 void GameLogic::menuSaveLoadMenu(bool isLoad) {
 	_menuIsSaveLoad = isLoad ? 2 : 1;
-	
+
 	GxlArchive *m04Gxl = new GxlArchive("m04");
 	// sysMouseDriver(2);
 	_vm->setMouseBounds(71, 248, 35, 141);
@@ -8722,7 +8957,7 @@ bool GameLogic::saveSavegame(int slot, const Common::String *desc) {
 		header.saveName = *desc;
 	else
 		header.saveName = Common::String::format("Unnamed savegame %2d", slot);
-	
+
 	header.version = kWWSavegameVersion;
 	_vm->writeSavegameHeader(saveFile, header);
 	delete saveFile;
@@ -8733,7 +8968,7 @@ bool GameLogic::saveSavegame(int slot, const Common::String *desc) {
 bool GameLogic::loadSavegame(int slot, bool rstSave) {
 	Common::InSaveFile *saveFile;
 	byte *buffer = nullptr;
-	
+
 	if (rstSave) {
 		Common::File fd;
 		if (!fd.open(Common::Path("ww.rst")))
@@ -8824,7 +9059,7 @@ void GameLogic::handleGameMenu() {
 			menuExit();
 		}
 		refresh = false;
-	} else {		
+	} else {
 		switch ((_vm->_mouseClickY - 24) / 16) {
 		case 0:
 			toggleMusicEnabled();
@@ -8862,7 +9097,7 @@ void GameLogic::handleGameMenu() {
 				// menuExit() must absolutely called after r0_flags is set otherwise it reset the menu mode.
 				menuExit();
 
-				// in the original this code is in a separate function r0_startPizzathonDialog 
+				// in the original this code is in a separate function r0_startPizzathonDialog
 				_vm->displayText("c11", 0, 0, -1, -1, 0);
 				_vm->setDialogChoices(29, 30, 31, 32, 33);
 				_vm->waitSeconds(2);
