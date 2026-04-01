@@ -146,6 +146,30 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			0
 		}
 	},
+	{
+		GAMEOPTION_WASD_CONTROLS,
+		{
+			// I18N: Use modern FPS-style controls: WASD for movement, Shift to run
+			_s("WASD controls"),
+			_s("Use WASD keys for movement and Shift to run"),
+			"wasd_controls",
+			false,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_AY_MUSIC,
+		{
+			// I18N: Enable background music using AY chip emulation
+			_s("Backported music from C64 releases"),
+			_s("Enable background music ported from the C64 version"),
+			"ay_music",
+			false,
+			0,
+			0
+		}
+	},
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR
 };
 

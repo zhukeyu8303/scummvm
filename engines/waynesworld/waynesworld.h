@@ -170,7 +170,7 @@ private:
 	int _startOagPos = 0;
 	int _startOaoPos = 0;
 	int _loadSaveSlot = -1;
-	
+
 	void sub3009A(int textId);
 	void sub2FEFB(int arg_refreshBackgFl, int arg_wBodyIndex, int arg_gBodyIndex, int arg_wHead1Index, int arg_gHead1Index, int arg_TextId);
 
@@ -400,6 +400,7 @@ public:
 	void setMouseBounds(int x1, int x2, int y1, int y2);
 	// Room
 	void openRoomLibrary(int roomNum);
+	void openAlternateRoomLibrary(const char *name);
 	void loadRoomBackground();
 	void changeRoom(int roomNum);
 	void refreshRoomBackground(int roomNum);

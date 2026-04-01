@@ -316,6 +316,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "letsdiscover",		"Let's Discover" },
 	{ "letters",			"Letters" },
 	{ "lostfoundvol1",		"Lost & Found: Volume 1" },
+	{ "lotusspring",		"The Legend of Lotus Spring" },
 	{ "louiscatorze",		"Louis Cat Orze: The Mystery of the Queen's Necklace" },
 	{ "luxor",				"Secrets of the Luxor" },
 	{ "madcc12",			"Madeline Classroom Companion: 1st & 2nd Grade" },
@@ -1265,6 +1266,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "schoolworld",		"A-L: Artificial Life: School World" },
 	{ "seesawc1",			"SeesawC1" },
 	{ "shikiotabisuru",		"四季を旅する" },
+	{ "shouchan",			"しょうちゃんの大冒険" },
 	{ "smallhouse",			"Small House" },
 	{ "startover",			"Start Over ROM" },
 	{ "tantei",				"完全探偵マニュアル" },								// Perfect Detective Manual
@@ -5967,6 +5969,9 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME2_l("shine", "", "Shine.exe",   "t:60469b7f995ca4fa7dc10edd3092841f", 1937650,
 							"TRAILER.DXR", "f:5d295bbffb2a4cc0e124503b39bfaf42",  171382, Common::DE_DEU, 404),
 
+	// Original filename is 'しょうちゃんの大冒険'
+	MACGAME1_l("shouchan", "",		   "xn--p8j7a5a2cyfva1gr294adjoqv8l", "r:3555cb434e61f33790783b23113b4f52",  502617, Common::JA_JPN, 404),
+
 	// Original filename is '心象風景'
 	MACGAME1_l("shinshofukei", "",		   "xn--15t91mv19ahjk", "r:8b138db44d4421cc7294a9dc792ccf1b",  502617, Common::JA_JPN, 404),
 	WINGAME1_l("shinshofukei", "",		   "SINSYO2.EXE",		"t:bb16588758a1ebd5df9fa8ecdd6bc249", 1296944, Common::JA_JPN, 404),
@@ -8794,6 +8799,12 @@ static const DirectorGameDescription gameDescriptions[] = {
 	// Original Mac filename is Löwenzahn 3
 	MACGAME1_l("loewe3", "", "xn--Lwenzahn 3-ecb",					"rt:e03c6cc5f2cdeef199f75c02928edafe", 1032378, Common::DE_DEU, 602),
 	WINGAME1_l("loewe3", "", "DATA/LOEWE3/SETUP/WIN95/LOEWE95.exe",	"t:0772adacde0f8fa5a9767de25be13527",  1514451, Common::DE_DEU, 602),
+
+	// Windows version requires installation, setup.exe, Setup Factory v4
+	MACGAME2("lotusspring", "", "LotusSpring/LS",				"r:4ea19c8b2483a9ae71df8000cae1097d", 1034669,
+								"LotusSpring/DXR/ChangeCD.dxr", "t:f1fc18e4479a4e26299cef2160315f19", 459346, 650),
+	WINGAME2("lotusspring", "", "LS.exe",						"t:c7e3b8162d6ab37b1960872efbb44ada", 1722439,
+								"DXR/ChangeCD.dxr", 			"t:f1fc18e4479a4e26299cef2160315f19", 459326, 600),
 
 	MACDEMO1("macos85", "Demo", "Mac OS 8.5 Demo", "49cc011560110af5e19d0cd1ee22b821", 1032397, 650),
 

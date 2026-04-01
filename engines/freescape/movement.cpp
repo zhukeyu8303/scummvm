@@ -37,6 +37,8 @@ void FreescapeEngine::initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *
 	act->addDefaultInputMapping("UP");
 	act->addDefaultInputMapping("JOY_UP");
 	act->addDefaultInputMapping("o");
+	if (_useWASDControls)
+		act->addDefaultInputMapping("w");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveDown, _("Down"));
@@ -44,20 +46,24 @@ void FreescapeEngine::initKeymaps(Common::Keymap *engineKeyMap, Common::Keymap *
 	act->addDefaultInputMapping("DOWN");
 	act->addDefaultInputMapping("JOY_DOWN");
 	act->addDefaultInputMapping("k");
+	if (_useWASDControls)
+		act->addDefaultInputMapping("s");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveLeft, _("Strafe left"));
 	act->setCustomEngineActionEvent(kActionMoveLeft);
 	act->addDefaultInputMapping("LEFT");
 	act->addDefaultInputMapping("JOY_LEFT");
-	// act->addDefaultInputMapping("q");
+	if (_useWASDControls)
+		act->addDefaultInputMapping("a");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action(Common::kStandardActionMoveRight, _("Strafe right"));
 	act->setCustomEngineActionEvent(kActionMoveRight);
 	act->addDefaultInputMapping("RIGHT");
 	act->addDefaultInputMapping("JOY_RIGHT");
-	// act->addDefaultInputMapping("w");
+	if (_useWASDControls)
+		act->addDefaultInputMapping("d");
 	engineKeyMap->addAction(act);
 
 	act = new Common::Action("SHOOT", _("Shoot"));
@@ -181,7 +187,11 @@ void FreescapeEngine::traverseEntrance(uint16 entranceID) {
 	debugC(1, kFreescapeDebugMove, "entrace position: %f %f %f", _position.x(), _position.y(), _position.z());
 	// Set the player height
 	_playerHeight = 0;
-	changePlayerHeight(_playerHeightNumber);
+	if (isDriller() && _playerHeightNumber == -1) {
+		_playerHeight = 2;
+		_position.setValue(1, _position.y() + _playerHeight);
+	} else
+		changePlayerHeight(_playerHeightNumber);
 	debugC(1, kFreescapeDebugMove, "player height: %d", _playerHeight);
 
 	_sensors = _currentArea->getSensors();
@@ -230,7 +240,7 @@ void FreescapeEngine::shoot() {
 
 	playSound(_soundIndexShoot, false, _movementSoundHandle);
 	g_system->delayMillis(2);
-	_shootingFrames = 10;
+	_shootingFrames = 8;
 
 	// Convert to normalized coordinates [-1, 1]
 	float ndcX = (2.0f * (_crossairPosition.x - _viewArea.left) / _viewArea.width()) - 1.0f;
@@ -280,6 +290,11 @@ void FreescapeEngine::changeAngle(int offset, bool wrapAround) {
 }
 
 void FreescapeEngine::changePlayerHeight(int index) {
+	if (index < 0) {
+		warning("Invalid player height index %d, clamping to 0", index);
+		index = 0;
+	}
+
 	int scale = _currentArea->getScale();
 
 	_position.setValue(1, _position.y() - _playerHeight);
@@ -332,6 +347,14 @@ bool FreescapeEngine::rise() {
 				changePlayerHeight(_playerHeightNumber);
 				if (!isCastle())
 					setGameBit(31);
+
+				Math::Ray ray(_position, _upVector);
+				Object *collidedUp = _currentArea->checkCollisionRay(ray, _playerHeight + 3);
+				if (collidedUp) {
+					GeometricObject *gobj = (GeometricObject *)collidedUp;
+					debugC(1, kFreescapeDebugMove, "Collided up with object id %d", gobj->getObjectID());
+					executeObjectConditions(gobj, false, true, false);
+				}
 			}
 		} else
 			result = true;
@@ -379,7 +402,7 @@ void FreescapeEngine::checkIfStillInArea() {
 			_position.setValue(i, maxPositiveDistance);
 	}
 	if (_position.y() >= 2016)
-		_position.y() = _lastPosition.z();
+		_position.y() = _lastPosition.y();
 }
 
 void FreescapeEngine::updatePlayerMovement(float deltaTime) {
@@ -448,13 +471,10 @@ void FreescapeEngine::updatePlayerMovementClassic(float deltaTime) {
 void FreescapeEngine::updatePlayerMovementSmooth(float deltaTime) {
 	if (_moveForward && !_eventManager->isActionActive(kActionMoveUp))
 		_moveForward = false;
-
 	if (_moveBackward && !_eventManager->isActionActive(kActionMoveDown))
 		_moveBackward = false;
-
 	if (_strafeLeft && !_eventManager->isActionActive(kActionMoveLeft))
 		_strafeLeft = false;
-
 	if (_strafeRight && !_eventManager->isActionActive(kActionMoveRight))
 		_strafeRight = false;
 
@@ -466,11 +486,11 @@ void FreescapeEngine::updatePlayerMovementSmooth(float deltaTime) {
 
 	if (_moveForward)
 		moveDir += _cameraFront;
-	else if (_moveBackward)
+	if (_moveBackward)
 		moveDir -= _cameraFront;
-	else if (_strafeLeft)
+	if (_strafeLeft)
 		moveDir += _cameraRight;
-	else if (_strafeRight)
+	if (_strafeRight)
 		moveDir -= _cameraRight;
 
 	if (_flyMode) {
