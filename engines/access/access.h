@@ -22,12 +22,12 @@
 #ifndef ACCESS_ACCESS_H
 #define ACCESS_ACCESS_H
 
-#include "common/scummsys.h"
-#include "common/system.h"
 #include "common/error.h"
 #include "common/random.h"
 #include "common/savefile.h"
+#include "common/scummsys.h"
 #include "common/serializer.h"
+#include "common/system.h"
 #include "common/util.h"
 
 #include "engines/engine.h"
@@ -38,6 +38,7 @@
 #include "access/bubble_box.h"
 #include "access/char.h"
 #include "access/data.h"
+#include "access/detection.h"
 #include "access/events.h"
 #include "access/files.h"
 #include "access/font.h"
@@ -49,7 +50,6 @@
 #include "access/scripts.h"
 #include "access/sound.h"
 #include "access/video.h"
-#include "access/detection.h"
 
 /**
  * This is the namespace of the Access engine.
@@ -100,30 +100,30 @@ struct AccessActionCode {
 };
 
 static const AccessActionCode AMAZON_ACTION_CODES[] = {
-	{ kActionLook, 1 },
-	{ kActionUse, 2 },
-	{ kActionTake, 3 },
-	{ kActionInventory, 4 },
-	{ kActionClimb, 5 },
-	{ kActionTalk, 6 },
-	{ kActionWalk, 7 },
-	{ kActionHelp, 8 },
-	{ kActionSaveLoad, -2 },
-	{ kActionNone, -1 },
+	{kActionLook, 1},
+	{kActionUse, 2},
+	{kActionTake, 3},
+	{kActionInventory, 4},
+	{kActionClimb, 5},
+	{kActionTalk, 6},
+	{kActionWalk, 7},
+	{kActionHelp, 8},
+	{kActionSaveLoad, -2},
+	{kActionNone, -1},
 };
 
 static const AccessActionCode MARTIAN_ACTION_CODES[] = {
-	{ kActionLook, 0 },
-	{ kActionOpen, 1 },
-	{ kActionMove, 2 },
-	{ kActionTake, 3 },
-	{ kActionUse, 4 },
-	{ kActionWalk, 5 },
-	{ kActionTalk, 6 },
-	{ kActionTravel, 7 },
-	{ kActionHelp, 8 },
-	{ kActionSaveLoad, -2 },
-	{ kActionNone, -1 },
+	{kActionLook, 0},
+	{kActionOpen, 1},
+	{kActionMove, 2},
+	{kActionTake, 3},
+	{kActionUse, 4},
+	{kActionWalk, 5},
+	{kActionTalk, 6},
+	{kActionTravel, 7},
+	{kActionHelp, 8},
+	{kActionSaveLoad, -2},
+	{kActionNone, -1},
 };
 
 #define ACCESS_SAVEGAME_VERSION 1
@@ -174,6 +174,7 @@ protected:
 	// Engine APIs
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
+
 protected:
 	/**
 	 * Play the game
@@ -181,9 +182,10 @@ protected:
 	virtual void playGame() = 0;
 
 	/**
-	* Synchronize savegame data
-	*/
+	 * Synchronize savegame data
+	 */
 	virtual void synchronize(Common::Serializer &s);
+
 public:
 	AnimationManager *_animation;
 	BubbleBox *_bubbleBox;
@@ -306,8 +308,8 @@ public:
 	void loadCells(const Common::Array<CellIdent> &cells);
 
 	/**
-	* Free the sprites list
-	*/
+	 * Free the sprites list
+	 */
 	void freeCells();
 
 	virtual void establish(int esatabIndex, int sub) = 0;
@@ -331,7 +333,6 @@ public:
 	void printText(BaseSurface *s, const Common::String &msg);
 	void speakText(BaseSurface *s, const Common::String &msg);
 
-	Common::String normalizeTTS(const Common::String &text); 
 	void ttsSay(const Common::String &text, bool interrupt = true);
 
 	void syncSoundSettings() override;
@@ -352,8 +353,8 @@ public:
 	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override;
 
 	/**
-	* Returns true if the game can currently be saved
-	*/
+	 * Returns true if the game can currently be saved
+	 */
 	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override;
 
 	/**

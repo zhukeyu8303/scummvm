@@ -19,11 +19,12 @@
  *
  */
 
-#include "common/scummsys.h"
-#include "access/access.h"
-#include "access/resources.h"
 #include "access/scripts.h"
+#include "access/access.h"
 #include "access/martian/martian_resources.h"
+#include "access/resources.h"
+#include "common/scummsys.h"
+#include "common/translation.h"
 
 namespace Access {
 
@@ -154,7 +155,8 @@ void Scripts::searchForSequence() {
 	_data->seek(0);
 	int sequenceId;
 	do {
-		while (_data->readByte() != SCRIPT_START_BYTE) {}
+		while (_data->readByte() != SCRIPT_START_BYTE) {
+		}
 		sequenceId = _data->readUint16LE();
 	} while (sequenceId != _sequence);
 }
@@ -680,7 +682,7 @@ void Scripts::cmdCheckTimer() {
 	byte val = (byte)_data->readUint16LE();
 
 	if (val != 0 && val != 1)
-        warning("Invalid check value %d in cmdCheckTimer - expect only 1 or 0??", val);
+		warning("Invalid check value %d in cmdCheckTimer - expect only 1 or 0??", val);
 
 	if (_vm->_timers[idx]._flag == val) {
 		debugC(1, kDebugScripts, " -> True");
@@ -993,7 +995,7 @@ void Scripts::cmdTexChoice() {
 
 	_vm->_bubbleBox->calcBubble(tmpStr);
 	_vm->_bubbleBox->printBubble(tmpStr);
-	_vm->ttsSay(Common::String::format("Option 1: %s", tmpStr.c_str()), true);
+	_vm->ttsSay(_("Option 1: ").encode() + tmpStr, true);
 
 	const int responseYOff = (_vm->getGameID() == kGameMartianMemorandum) ? 20 : 11;
 
@@ -1054,9 +1056,8 @@ void Scripts::cmdTexChoice() {
 	_choice = choice + 1;
 	if (choice >= 0 && choice < (int)_vm->_bubbleBox->_bubbles.size()) {
 		// speak eventual chosen text (if available from bubble content)
-		Common::String choiceText;
 		// We do not have direct list text; keep as generic
-		choiceText = Common::String::format("Choice %d", choice + 1);
+		Common::String choiceText = Common::String::format("Choice %d", choice + 1);
 		_vm->ttsSay(choiceText, true);
 	}
 	_vm->_bubbleBox->clearBubbles();
@@ -1071,7 +1072,7 @@ void Scripts::cmdWait() {
 	_vm->_events->zeroKeysActions();
 
 	while (!_vm->shouldQuit() && !_vm->_events->isKeyActionMousePressed() &&
-			_vm->_timers[3]._flag) {
+		   _vm->_timers[3]._flag) {
 		_vm->_midi->midiRepeat();
 		charLoop();
 
@@ -1169,7 +1170,7 @@ void Scripts::cmdPlayVideoSound() {
 	debugC(1, kDebugScripts, "cmdPlayVideoSound()");
 	_vm->_video->playVideo();
 	if (_vm->_video->_soundFrame == _vm->_video->_videoFrame &&
-			!_vm->_video->_soundFlag) {
+		!_vm->_video->_soundFlag) {
 		_vm->_sound->playSound(0);
 		_vm->_video->_soundFlag = true;
 	}

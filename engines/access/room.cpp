@@ -19,13 +19,14 @@
  *
  */
 
-#include "common/scummsys.h"
-#include "common/memstream.h"
-#include "access/access.h"
-#include "access/resources.h"
 #include "access/room.h"
+#include "access/access.h"
 #include "access/amazon/amazon_resources.h"
 #include "access/martian/martian_resources.h"
+#include "access/resources.h"
+#include "common/memstream.h"
+#include "common/scummsys.h"
+#include "common/translation.h"
 
 namespace Access {
 
@@ -96,7 +97,7 @@ void Room::takePicture() {
 	for (int i = 0; Martian::PICTURE_RANGE[i][0] != -1; i += 2) {
 		// PICTURE_RANGE is min/max X, min/max Y
 		pictureCoords.push_back(Common::Rect(Martian::PICTURE_RANGE[i][0], Martian::PICTURE_RANGE[i + 1][0],
-			                                 Martian::PICTURE_RANGE[i][1], Martian::PICTURE_RANGE[i + 1][1]));
+											 Martian::PICTURE_RANGE[i][1], Martian::PICTURE_RANGE[i + 1][1]));
 	}
 
 	int result = _vm->_events->checkMouseBox1(pictureCoords);
@@ -160,8 +161,7 @@ void Room::doRoom() {
 	bool reloadFlag = false;
 
 	// Noctropolis doesn't have an icon bar at the bottom, so never set arrow cursor
-	int mouseCursorArrowYThreshold = (_vm->getGameID() == kGameMartianMemorandum) ? 184 :
-		((_vm->getGameID() == kGameAmazon) ? 177 : 1000);
+	int mouseCursorArrowYThreshold = (_vm->getGameID() == kGameMartianMemorandum) ? 184 : ((_vm->getGameID() == kGameAmazon) ? 177 : 1000);
 
 	while (!_vm->shouldQuit()) {
 		if (!reloadFlag) {
@@ -324,7 +324,7 @@ void Room::loadRoomData(const byte *roomData) {
 
 	if (roomInfo._playFieldFile._fileNum != -1) {
 		loadPlayField(roomInfo._playFieldFile._fileNum,
-			roomInfo._playFieldFile._subfile);
+					  roomInfo._playFieldFile._subfile);
 		setupRoom();
 
 		_vm->_scaleMaxY = _playFieldHeight << 4;
@@ -357,7 +357,7 @@ void Room::loadRoomData(const byte *roomData) {
 		_vm->_screen->_startColor = roomInfo._startColor;
 		_vm->_screen->_numColors = roomInfo._numColors;
 		_vm->_screen->loadPalette(roomInfo._paletteFile._fileNum,
-			roomInfo._paletteFile._subfile);
+								  roomInfo._paletteFile._subfile);
 	}
 
 	// Load extra cells
@@ -402,9 +402,10 @@ void Room::setupRoom() {
 		_vm->_scrollRow = 0;
 	} else {
 		_vm->_scrollY = _vm->_player->_rawPlayer.y -
-			(_vm->_player->_rawPlayer.y / TILE_HEIGHT) * TILE_HEIGHT;
+						(_vm->_player->_rawPlayer.y / TILE_HEIGHT) * TILE_HEIGHT;
 		int yc = MAX((_vm->_player->_rawPlayer.y / TILE_HEIGHT) -
-			(screen._vWindowHeight / 2), 0);
+						 (screen._vWindowHeight / 2),
+					 0);
 		_vm->_scrollRow = yc;
 
 		yc = yc + screen._vWindowHeight - _playFieldHeight;
@@ -448,8 +449,7 @@ void Room::buildColumn(int playX, int screenX) {
 	if (playX < 0 || playX >= _playFieldWidth)
 		return;
 
-	const byte *pSrc = _playField + _vm->_scrollRow *
-		_playFieldWidth + playX;
+	const byte *pSrc = _playField + _vm->_scrollRow * _playFieldWidth + playX;
 
 	// WORKAROUND: Original's use of '+ 1' would frequently cause memory overruns
 	int h = MIN(_vm->_screen->_vWindowHeight + 1, _playFieldHeight - _vm->_scrollRow);
@@ -560,16 +560,71 @@ void Plotter::load(Common::SeekableReadStream *stream, int wallCount, int blockC
 		_blocks[i].bottom = stream->readSint16LE();
 }
 
-static const char *getCommandName(int commandId, bool martian) {
-	static const char *amazonNames[10] = {
-		"Look", "Use", "Take", "Inventory", "Climb", "Talk", "Walk", "Help", "", ""};
-	static const char *martianNames[10] = {
-		"Look","", "Open", "Move", "Take", "Use", "Walk", "Talk", "Travel", "Help"};
+static Common::String getCommandName(int commandId, AccessEngine *vm) {
 	if (commandId < 0 || commandId >= 10)
-		return "";
-	return martian ? martianNames[commandId] : amazonNames[commandId];
+		return Common::String();
+
+	switch (vm->getGameID()) {
+	case kGameAmazon:
+		switch (commandId) {
+		case 0:
+			return _("Look");
+		case 1:
+			return _("Use");
+		case 2:
+			return _("Take");
+		case 3:
+			return _("Inventory");
+		case 4:
+			return _("Climb");
+		case 5:
+			return _("Talk");
+		case 6:
+			return _("Walk");
+		case 7:
+			return _("Help");
+		default:
+			return Common::String();
+		}
+	case kGameMartianMemorandum:
+		switch (commandId) {
+		case 0:
+			return _("Look");
+		case 2:
+			return _("Open");
+		case 3:
+			return _("Move");
+		case 4:
+			return _("Take");
+		case 5:
+			return _("Use");
+		case 6:
+			return _("Walk");
+		case 7:
+			return _("Talk");
+		case 8:
+			return _("Travel");
+		case 9:
+			return _("Help");
+		default:
+			return Common::String();
+		}
+	default:
+		return Common::String();
+	}
 }
 
+int Room::getButtonIndexFromPos(int mouseX, int mouseY) const {
+	int buttonBarY = (_vm->getGameID() == kGameMartianMemorandum) ? 184 : 177;
+	if (mouseY < buttonBarY)
+		return -1;
+
+	for (int i = 0; i < 10; ++i) {
+		if (mouseX >= _rMouse[i][0] && mouseX < _rMouse[i][1])
+			return i;
+	}
+	return -1;
+}
 
 void Room::doCommands() {
 	int commandId = -1;
@@ -578,26 +633,15 @@ void Room::doCommands() {
 	if (_vm->_startup != -1)
 		return;
 
-	const int *buttonStarts = _rMouse[0];
-	auto getButtonIndex = [&](int mouseX) -> int {
-		for (int i = 0; i < 10; ++i) {
-			int left = buttonStarts[i];
-			int right = (i < 9) ? buttonStarts[i + 1] : 320;
-			if (mouseX >= left && mouseX < right)
-				return i;
-		}
-		return -1;
-	};
-
 	int hoverCommand = -1;
-	if (_vm->_events->_mouseRow >= 22) {
-		hoverCommand = getButtonIndex(_vm->_events->_mousePos.x);
+	if (_vm->_events->_mousePos.y >= ((_vm->getGameID() == kGameMartianMemorandum) ? 184 : 177)) {
+		hoverCommand = getButtonIndexFromPos(_vm->_events->_mousePos.x, _vm->_events->_mousePos.y);
 	}
 
 	if (hoverCommand != _lastHoveredCommand) {
 		_lastHoveredCommand = hoverCommand;
 		if (hoverCommand != -1) {
-			_vm->ttsSay(getCommandName(hoverCommand, _vm->getGameID() == kGameMartianMemorandum), true);
+			_vm->ttsSay(getCommandName(hoverCommand, _vm), true);
 		}
 	}
 	if (_vm->_inventory->_invChangeFlag)
@@ -607,17 +651,13 @@ void Room::doCommands() {
 		_vm->_screen->_screenChangeFlag = false;
 		_vm->_events->_cursorExitFlag = true;
 		executeCommand(7);
-	}
-	else if (_vm->_events->_wheelUp || _vm->_events->_wheelDown) {
+	} else if (_vm->_events->_wheelUp || _vm->_events->_wheelDown) {
 		cycleCommand(_vm->_events->_wheelUp ? 1 : -1);
-	}
-	else if (_vm->_events->_middleButton) {
+	} else if (_vm->_events->_middleButton) {
 		handleCommand(7);
-	}
-	else if (_vm->_events->_leftButton) {
-		if (_vm->_events->_mouseRow >= 22) {
-
-			commandId = getButtonIndex(_vm->_events->_mousePos.x);
+	} else if (_vm->_events->_leftButton) {
+		if (_vm->_events->_mousePos.y >= ((_vm->getGameID() == kGameMartianMemorandum) ? 184 : 177)) {
+			commandId = getButtonIndexFromPos(_vm->_events->_mousePos.x, _vm->_events->_mousePos.y);
 			if (commandId != -1)
 				handleCommand(commandId);
 		} else {
@@ -634,14 +674,13 @@ void Room::doCommands() {
 	}
 }
 
-
 void Room::cycleCommand(int incr) {
 	int command = _selectCommand + incr;
 	if (command < -1)
 		command = 6;
 	else if (command == -1)
 		command = 7;
-	else  if (command == 1)
+	else if (command == 1)
 		command = (incr == 1) ? 2 : 0;
 	else if (command == 4)
 		command = (incr == 1) ? 5 : 3;
@@ -718,7 +757,7 @@ void Room::executeCommand(int commandId) {
 
 			_vm->_boxSelect = true;
 			return;
-			}
+		}
 		default:
 			// No set cursor in MM. Forcing to CROSSHAIRS
 			events.setCursor(CURSOR_CROSSHAIRS);
@@ -773,7 +812,7 @@ void Room::executeCommand(int commandId) {
 		screen.plotImage(icons, 1, Common::Point(143, 177));
 	}
 	screen.plotImage(icons, _selectCommand + 2,
-		Common::Point(_rMouse[_selectCommand][0], (_vm->getGameID() == kGameMartianMemorandum) ? 184 : 176));
+					 Common::Point(_rMouse[_selectCommand][0], (_vm->getGameID() == kGameMartianMemorandum) ? 184 : 176));
 
 	_vm->_screen->restoreScreen();
 	_vm->_boxSelect = true;
@@ -907,10 +946,12 @@ bool Room::codeWalls() {
 				swapOrg();
 
 			if ((player._rawYTemp >= screen._orgY1) &&
-					(player._rawYTemp <= screen._orgY2)) {
+				(player._rawYTemp <= screen._orgY2)) {
 				jf._wallCode |= (calcLR(player._rawYTemp) - player._rawXTemp) < 0 ? 2 : 1;
 				jf._wallCode1 |= (calcLR(player._rawYTemp) -
-					(player._rawXTemp + player._playerOffset.x)) < 0 ? 2 : 1;
+								  (player._rawXTemp + player._playerOffset.x)) < 0
+									 ? 2
+									 : 1;
 			}
 		}
 
@@ -919,7 +960,7 @@ bool Room::codeWalls() {
 				swapOrg();
 
 			if ((player._rawXTemp >= screen._orgX1) &&
-					(player._rawXTemp <= screen._orgX2)) {
+				(player._rawXTemp <= screen._orgX2)) {
 				int y = screen._orgY2;
 				if (y != screen._orgY1)
 					y = calcUD(player._rawXTemp);
